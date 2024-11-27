@@ -38,7 +38,15 @@ function KonvaCanvas() {
     const pointer = stage.getPointerPosition();
   
     if (tool === "lasso") {
-      setLines([...lines, { points: [pointer.x, pointer.y], closed: false, color: "green" }]);
+      setLines([
+        ...lines,
+        {
+          points: [pointer.x, pointer.y],
+          closed: false,
+          color: "green",
+          fill: "rgba(0, 255, 0, 0.2)",
+        },
+      ]);
     } else if (tool === "rectangle") {
       setRectangles([...rectangles, { x: pointer.x, y: pointer.y, width: 0, height: 0 }]);
     } else if (tool === "draw") {
@@ -52,27 +60,33 @@ function KonvaCanvas() {
   }, [lines, rectangles, tool, brushWidth, saveToHistory]);
 
   const handleMouseMove = () => {
-    if (!isDrawing) return;
-
+    if (!isDrawing || tool !== "lasso") return;
+  
     const stage = stageRef.current.getStage();
     const pointer = stage.getPointerPosition();
-
-    if (tool === "lasso" || tool === "draw") {
-      const lastLine = lines[lines.length - 1];
-      lastLine.points = lastLine.points.concat([pointer.x, pointer.y]);
-      setLines([...lines.slice(0, -1), lastLine]);
-    } else if (tool === "rectangle") {
-      const lastRect = rectangles[rectangles.length - 1];
-      lastRect.width = pointer.x - lastRect.x;
-      lastRect.height = pointer.y - lastRect.y;
-      setRectangles([...rectangles.slice(0, -1), lastRect]);
-    }
+  
+    const lastLine = lines[lines.length - 1];
+    
+    const updatedPoints = lastLine.points.concat([pointer.x, pointer.y]);
+  
+    const closedPoints = [...updatedPoints, lastLine.points[0], lastLine.points[1]];
+  
+    setLines([
+      ...lines.slice(0, -1),
+      {
+        ...lastLine,
+        points: updatedPoints,
+        fill: "rgba(0, 255, 0, 0.2)",
+        closed: true,
+      },
+    ]);
   };
-
+  
   const handleMouseUp = () => {
     if (tool === "lasso") {
       const lastLine = lines[lines.length - 1];
       lastLine.closed = true;
+      lastLine.fill = "green";
       setLines([...lines.slice(0, -1), lastLine]);
     }
     setIsDrawing(false);
@@ -223,11 +237,11 @@ function KonvaCanvas() {
                     key={i}
                     points={line.points}
                     stroke={line.color}
-                    strokeWidth={line.width}
+                    strokeWidth={2}
                     lineCap="round"
                     tension={0.5}
                     closed={line.closed}
-                    fill={line.closed ? line.color : "transparent"}
+                    fill={line.fill}
                     globalCompositeOperation="source-over"
                   />
                 ))}

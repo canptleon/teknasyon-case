@@ -3,6 +3,7 @@ export type LineType = {
   closed: boolean;
   color: string;
   width?: number;
+  fill?: string;
 };
 
 export type RectangleType = {
