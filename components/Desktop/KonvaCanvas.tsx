@@ -7,7 +7,6 @@ function KonvaCanvas() {
   const [tool, setTool] = useState<string>("select");
   const [lines, setLines] = useState<any[]>([]);
   const [rectangles, setRectangles] = useState<any[]>([]);
-  const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [exportFormat, setExportFormat] = useState<"png" | "jpg" | "jpeg">("png");
   const [loading, setLoading] = useState(false);
@@ -264,7 +263,7 @@ function KonvaCanvas() {
                   onClick={exportCanvas}>
                   <div className="button__content">
                     <div className="button__icon">
-                      <img src="/icons/export.png" alt="Export" />
+                      <img src="/icons/export.png" alt="Export" title="Export Masked Image"/>
                     </div>
                   </div>
                 </button>
@@ -280,17 +279,31 @@ function KonvaCanvas() {
               <button className={`button max-w-[60px] max-h-[60px]`} onClick={resetCanvas}>
                 <div className="button__content">
                   <div className="button__icon">
-                    <img src="/icons/reset.png" alt="Reset" />
+                    <img src="/icons/reset.png" alt="Reset" title="Reset Changes"/>
                   </div>
                 </div>
               </button>
               <button className={`button max-w-[60px] max-h-[60px]`} onClick={rewindCanvas}>
                 <div className="button__content">
                   <div className="button__icon">
-                    <img src="/icons/back.png" alt="Rewind" />
+                    <img src="/icons/back.png" alt="Rewind" title="Rewind Changes"/>
                   </div>
                 </div>
               </button>
+              <label className={`button max-w-[60px] max-h-[60px]`} htmlFor="file-upload">
+                <div className="button__content">
+                  <div className="button__icon">
+                    <img src="/icons/plus.png" alt="Add Image" title="Add New Image"/>
+                  </div>
+                </div>
+                <input
+                  id="file-upload"
+                  type="file"
+                  accept="image/png, image/jpeg, image/jpg"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+              </label>
             </div>
           </div>
 
@@ -349,7 +362,7 @@ function KonvaCanvas() {
           <label className="button !w-[170px] !h-[142px]" htmlFor="file-upload">
             <div className="button__content">
               <div className="button__icon">
-                <img src="/icons/plus.png" alt="Lasso" />
+                <img src="/icons/plus.png" alt="Add Image" />
               </div>
               <p className="button__text">Add Photo</p>
             </div>
