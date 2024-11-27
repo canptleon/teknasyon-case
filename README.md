@@ -3,6 +3,12 @@
 *Konva Masking and Drawing Tool*
 A web-based image manipulation tool built with **React** and **Konva.js**, allowing users to upload images, draw shapes (Brush, Lasso, Rectangle), and export masked images in **PNG**, **JPG**, or **JPEG** formats.
 
+## Live Demo
+
+Check out the live demo of the project here:
+
+**LIVE DEMO**: [https://teknasyon-case.vercel.app/](https://teknasyon-case.vercel.app/)
+
 ## **Features**
 
 - **Image Upload:** Add an image to the canvas for manipulation.
@@ -16,10 +22,6 @@ A web-based image manipulation tool built with **React** and **Konva.js**, allow
   - **JPG**: Compressed image format.
   - **JPEG**: Alternative compressed format.
 - **Adjust Pencil Size:** Change the width of the Brush and Lasso tools for precise editing.
-
-## **Demo**
-
-Include a demo link if applicable (e.g., `https://example.com`).
 
 ## **Getting Started**
 
