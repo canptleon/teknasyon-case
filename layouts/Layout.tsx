@@ -1,5 +1,7 @@
 import React, { ReactElement, ReactNode, memo } from "react";
 import MobileHeader from "./GeneralLayouts/Mobile/Header";
+import MobileFooter from "./GeneralLayouts/Mobile/Footer";
+import DesktopFooter from "./GeneralLayouts/Desktop/Footer";
 
 interface LayoutProps {
   children: ReactElement | ReactElement[] | ReactNode;
@@ -15,10 +17,12 @@ function Layout(props: LayoutProps) {
         <>
           <MobileHeader />
           {props.children}
+          <MobileFooter/>
         </>
       ) : (
         <>
           {props.children}
+          <DesktopFooter/>
         </>
       )}
     </>

@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React from "react";
 import Link from "next/link";
 
 function DesktopFooter() {
@@ -9,11 +9,15 @@ function DesktopFooter() {
           
         </div>
         <div className="text-center text-sm text-[black] pl-[20px] pr-[20px] font-semibold bg-[#ffffff] p-[5px] rounded-[50px]">
-          &copy; 2024 Arda Keyişoğlu. All Rights Reserved.
+          &copy; 2024 
+            <Link href="https://www.ardakeyisoglu.com/" target="_blank">
+              Arda Keyişoğlu.
+            </Link>
+          All Rights Reserved.
         </div>
       </div>
     </footer>
   );
 }
 
-export default memo(DesktopFooter);
+export default DesktopFooter;
