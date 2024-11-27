@@ -7,7 +7,7 @@ const KonvaCanvas = dynamic(() => import("../../../components/Desktop/KonvaCanva
 
 function DesktopHomepageLayout() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
+    <div className="flex flex-col items-center justify-center min-h-[83vh]">
       <KonvaCanvas />
     </div>
   );
