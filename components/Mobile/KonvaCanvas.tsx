@@ -228,7 +228,7 @@ function KonvaCanvas() {
                     key={i}
                     points={line.points}
                     stroke={line.color}
-                    strokeWidth={2}
+                    strokeWidth={line.width}
                     lineCap="round"
                     tension={0.5}
                     closed={line.closed}
@@ -330,16 +330,33 @@ function KonvaCanvas() {
                 <p className="button__text">Lasso</p>
               </div>
             </button>
-            <button
-              className={`button ${tool === "draw" && "active z-5"}`}
-              onClick={() => setTool("draw")}>
-              <div className="button__content">
-                <div className="button__icon">
-                  <img src="/icons/brush.png" alt="Brush" />
+            <div className="flex flex-col items-center gap-2">
+              <button
+                className={`button ${tool === "draw" && "active z-5"}`}
+                onClick={() => setTool("draw")}>
+                <div className="button__content">
+                  <div className="button__icon">
+                    <img src="/icons/brush.png" alt="Brush" />
+                  </div>
+                  <p className="button__text">Brush</p>
                 </div>
-                <p className="button__text">Brush</p>
+              </button>
+              <div className="flex flex-col items-center mt-4 gap-2">
+                <label htmlFor="brush-width" className="text-gray-700">
+                  Adjust Brush Width
+                </label>
+                <input
+                  id="brush-width"
+                  type="range"
+                  min="1"
+                  max="50"
+                  value={brushWidth}
+                  onChange={e => setBrushWidth(Number(e.target.value))}
+                  className="w-full"
+                />
+                <p className="text-sm text-gray-500">Width: {brushWidth}px</p>
               </div>
-            </button>
+            </div>
             <button
               className={`button ${tool === "rectangle" && "active z-5"}`}
               onClick={() => setTool("rectangle")}>
