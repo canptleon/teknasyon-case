@@ -13,6 +13,19 @@ function KonvaCanvas() {
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<any[]>([]);
   const [brushWidth, setBrushWidth] = useState<number>(5);
+  const [imageData, setImageData] = useState<{
+    image: HTMLImageElement | null;
+    scaledWidth: number;
+    scaledHeight: number;
+    offsetX: number;
+    offsetY: number;
+  }>({
+    image: null,
+    scaledWidth: 800,
+    scaledHeight: 600,
+    offsetX: 0,
+    offsetY: 0,
+  });
 
   const saveToHistory = () => {
     setHistory(prevHistory => [
@@ -76,9 +89,38 @@ function KonvaCanvas() {
     const file = e.target.files?.[0];
     if (file) {
       const img = new window.Image();
+      img.crossOrigin = "anonymous";
       img.src = URL.createObjectURL(file);
-      img.onload = () => setImage(img);
-      setLoading(false);
+
+      img.onload = () => {
+        const canvasWidth = 800;
+        const canvasHeight = 600;
+        const imgAspectRatio = img.width / img.height;
+        const canvasAspectRatio = canvasWidth / canvasHeight;
+
+        let scaledWidth, scaledHeight;
+
+        if (imgAspectRatio > canvasAspectRatio) {
+          scaledWidth = canvasWidth;
+          scaledHeight = canvasWidth / imgAspectRatio;
+        } else {
+          scaledHeight = canvasHeight;
+          scaledWidth = canvasHeight * imgAspectRatio;
+        }
+
+        const offsetX = (canvasWidth - scaledWidth) / 2;
+        const offsetY = (canvasHeight - scaledHeight) / 2;
+
+        setImageData({
+          image: img,
+          scaledWidth,
+          scaledHeight,
+          offsetX,
+          offsetY,
+        });
+
+        setLoading(false);
+      };
     }
   };
 
@@ -99,53 +141,76 @@ function KonvaCanvas() {
   };
 
   const exportCanvas = () => {
-    if (!stageRef.current) return;
-
-    const stage = stageRef.current.getStage();
-    const exportCanvas = document.createElement("canvas");
-    const context = exportCanvas.getContext("2d");
-
-    exportCanvas.width = stage.width();
-    exportCanvas.height = stage.height();
-
-    if (context) {
-      context.fillStyle = "black";
-      context.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
-
-      lines.forEach(line => {
-        context.beginPath();
-        context.moveTo(line.points[0], line.points[1]);
-        for (let i = 2; i < line.points.length; i += 2) {
-          context.lineTo(line.points[i], line.points[i + 1]);
-        }
-        if (line.closed) {
-          context.closePath();
-          context.fillStyle = "white";
-          context.fill();
-        } else {
-          context.strokeStyle = "white";
-          context.lineWidth = 2;
-          context.stroke();
-        }
-      });
-
-      rectangles.forEach(rect => {
-        context.fillStyle = "white";
-        context.fillRect(rect.x, rect.y, rect.width, rect.height);
-      });
-
-      const dataURL = exportCanvas.toDataURL(`image/${exportFormat}`);
-      const link = document.createElement("a");
-      link.href = dataURL;
-      link.download = `export-mask.${exportFormat}`;
-      link.click();
+    if (!stageRef.current || !imageData.image) {
+      alert("Canvas or image not available for export.");
+      return;
     }
+  
+    const stage = stageRef.current.getStage();
+  
+    const exportCanvas = document.createElement("canvas");
+    exportCanvas.width = imageData.image.naturalWidth;
+    exportCanvas.height = imageData.image.naturalHeight;
+  
+    const context = exportCanvas.getContext("2d");
+    if (!context) {
+      alert("Failed to get export canvas context.");
+      return;
+    }
+  
+    context.fillStyle = "black";
+    context.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+  
+    const scaleX = imageData.image.naturalWidth / imageData.scaledWidth;
+    const scaleY = imageData.image.naturalHeight / imageData.scaledHeight;
+  
+    const offsetX = -imageData.offsetX * scaleX;
+    const offsetY = -imageData.offsetY * scaleY;
+  
+    lines.forEach((line) => {
+      context.beginPath();
+      context.moveTo(
+        line.points[0] * scaleX + offsetX,
+        line.points[1] * scaleY + offsetY
+      );
+      for (let i = 2; i < line.points.length; i += 2) {
+        context.lineTo(
+          line.points[i] * scaleX + offsetX,
+          line.points[i + 1] * scaleY + offsetY
+        );
+      }
+      if (line.closed) {
+        context.closePath();
+        context.fillStyle = "white";
+        context.fill();
+      } else {
+        context.strokeStyle = "white";
+        context.lineWidth = line.width * Math.max(scaleX, scaleY);
+        context.stroke();
+      }
+    });
+  
+    rectangles.forEach((rect) => {
+      context.fillStyle = "white";
+      context.fillRect(
+        rect.x * scaleX + offsetX,
+        rect.y * scaleY + offsetY,
+        rect.width * scaleX,
+        rect.height * scaleY
+      );
+    });
+  
+    const dataURL = exportCanvas.toDataURL(`image/${exportFormat}`);
+    const link = document.createElement("a");
+    link.href = dataURL;
+    link.download = `export-mask.${exportFormat}`;
+    link.click();
   };
-
+  
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
       {loading && <Loader />}
-      {image ? (
+      {imageData.image ? (
         <>
           <div className="relative">
             <Stage
@@ -157,7 +222,14 @@ function KonvaCanvas() {
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}>
               <Layer>
-                <Image image={image} x={0} y={0} width={800} height={600} draggable={false} />
+                <Image
+                  image={imageData.image}
+                  x={imageData.offsetX}
+                  y={imageData.offsetY}
+                  width={imageData.scaledWidth}
+                  height={imageData.scaledHeight}
+                  draggable={false}
+                />
                 {lines.map((line, i) => (
                   <Line
                     key={i}
