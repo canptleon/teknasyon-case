@@ -7,12 +7,37 @@ function KonvaCanvas() {
   const [tool, setTool] = useState<string>("select");
   const [lines, setLines] = useState<any[]>([]);
   const [rectangles, setRectangles] = useState<any[]>([]);
-  const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [exportFormat, setExportFormat] = useState<"png" | "jpg" | "jpeg">("png");
   const [loading, setLoading] = useState(false);
+  const [history, setHistory] = useState<any[]>([]);
+  const [brushWidth, setBrushWidth] = useState<number>(5);
+  const [imageData, setImageData] = useState<{
+    image: HTMLImageElement | null;
+    scaledWidth: number;
+    scaledHeight: number;
+    offsetX: number;
+    offsetY: number;
+  }>({
+    image: null,
+    scaledWidth: 400,
+    scaledHeight: 300,
+    offsetX: 0,
+    offsetY: 0,
+  });
+
+  const saveToHistory = () => {
+    setHistory(prevHistory => [
+      ...prevHistory,
+      {
+        lines: [...lines],
+        rectangles: [...rectangles],
+      },
+    ]);
+  };
 
   const handleMouseDown = () => {
+    saveToHistory();
     const stage = stageRef.current.getStage();
     const pointer = stage.getPointerPosition();
 
@@ -21,7 +46,10 @@ function KonvaCanvas() {
     } else if (tool === "rectangle") {
       setRectangles([...rectangles, { x: pointer.x, y: pointer.y, width: 0, height: 0 }]);
     } else if (tool === "draw") {
-      setLines([...lines, { points: [pointer.x, pointer.y], closed: false, color: "blue" }]);
+      setLines([
+        ...lines,
+        { points: [pointer.x, pointer.y], closed: false, color: "blue", width: brushWidth },
+      ]);
     }
 
     setIsDrawing(true);
@@ -60,66 +88,122 @@ function KonvaCanvas() {
     const file = e.target.files?.[0];
     if (file) {
       const img = new window.Image();
+      img.crossOrigin = "anonymous";
       img.src = URL.createObjectURL(file);
-      img.onload = () => setImage(img);
-      setLoading(false);
+
+      img.onload = () => {
+        const canvasWidth = 400;
+        const canvasHeight = 300;
+        const imgAspectRatio = img.width / img.height;
+        const canvasAspectRatio = canvasWidth / canvasHeight;
+
+        let scaledWidth, scaledHeight;
+
+        if (imgAspectRatio > canvasAspectRatio) {
+          scaledWidth = canvasWidth;
+          scaledHeight = canvasWidth / imgAspectRatio;
+        } else {
+          scaledHeight = canvasHeight;
+          scaledWidth = canvasHeight * imgAspectRatio;
+        }
+
+        const offsetX = (canvasWidth - scaledWidth) / 2;
+        const offsetY = (canvasHeight - scaledHeight) / 2;
+
+        setImageData({
+          image: img,
+          scaledWidth,
+          scaledHeight,
+          offsetX,
+          offsetY,
+        });
+
+        setLoading(false);
+      };
     }
   };
 
   const resetCanvas = () => {
+    saveToHistory();
     setLines([]);
     setRectangles([]);
     setTool("select");
   };
 
-  const exportCanvas = () => {
-    if (!stageRef.current) return;
-
-    const stage = stageRef.current.getStage();
-    const exportCanvas = document.createElement("canvas");
-    const context = exportCanvas.getContext("2d");
-
-    exportCanvas.width = stage.width();
-    exportCanvas.height = stage.height();
-
-    if (context) {
-      context.fillStyle = "black";
-      context.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
-
-      lines.forEach(line => {
-        context.beginPath();
-        context.moveTo(line.points[0], line.points[1]);
-        for (let i = 2; i < line.points.length; i += 2) {
-          context.lineTo(line.points[i], line.points[i + 1]);
-        }
-        if (line.closed) {
-          context.closePath();
-          context.fillStyle = "white";
-          context.fill();
-        } else {
-          context.strokeStyle = "white";
-          context.lineWidth = 2;
-          context.stroke();
-        }
-      });
-
-      rectangles.forEach(rect => {
-        context.fillStyle = "white";
-        context.fillRect(rect.x, rect.y, rect.width, rect.height);
-      });
-
-      const dataURL = exportCanvas.toDataURL(`image/${exportFormat}`);
-      const link = document.createElement("a");
-      link.href = dataURL;
-      link.download = `export-mask.${exportFormat}`;
-      link.click();
+  const rewindCanvas = () => {
+    if (history.length > 0) {
+      const lastState = history[history.length - 1];
+      setLines(lastState.lines);
+      setRectangles(lastState.rectangles);
+      setHistory(history.slice(0, -1));
     }
   };
 
+  const exportCanvas = () => {
+    if (!stageRef.current || !imageData.image) {
+      alert("Canvas or image not available for export.");
+      return;
+    }
+
+    const stage = stageRef.current.getStage();
+
+    const exportCanvas = document.createElement("canvas");
+    exportCanvas.width = imageData.image.naturalWidth;
+    exportCanvas.height = imageData.image.naturalHeight;
+
+    const context = exportCanvas.getContext("2d");
+    if (!context) {
+      alert("Failed to get export canvas context.");
+      return;
+    }
+
+    context.fillStyle = "black";
+    context.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+    const scaleX = imageData.image.naturalWidth / imageData.scaledWidth;
+    const scaleY = imageData.image.naturalHeight / imageData.scaledHeight;
+
+    const offsetX = -imageData.offsetX * scaleX;
+    const offsetY = -imageData.offsetY * scaleY;
+
+    lines.forEach(line => {
+      context.beginPath();
+      context.moveTo(line.points[0] * scaleX + offsetX, line.points[1] * scaleY + offsetY);
+      for (let i = 2; i < line.points.length; i += 2) {
+        context.lineTo(line.points[i] * scaleX + offsetX, line.points[i + 1] * scaleY + offsetY);
+      }
+      if (line.closed) {
+        context.closePath();
+        context.fillStyle = "white";
+        context.fill();
+      } else {
+        context.strokeStyle = "white";
+        context.lineWidth = line.width * Math.max(scaleX, scaleY);
+        context.stroke();
+      }
+    });
+
+    rectangles.forEach(rect => {
+      context.fillStyle = "white";
+      context.fillRect(
+        rect.x * scaleX + offsetX,
+        rect.y * scaleY + offsetY,
+        rect.width * scaleX,
+        rect.height * scaleY
+      );
+    });
+
+    const dataURL = exportCanvas.toDataURL(`image/${exportFormat}`);
+    const link = document.createElement("a");
+    link.href = dataURL;
+    link.download = `export-mask.${exportFormat}`;
+    link.click();
+  };
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
+    <div className="flex flex-col items-center justify-center min-h-[77vh]">
       {loading && <Loader />}
-      {image ? (
+      {imageData.image ? (
         <>
           <div className="relative">
             <Stage
@@ -131,13 +215,33 @@ function KonvaCanvas() {
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}>
               <Layer>
-                <Image image={image} x={0} y={0} width={400} height={300} draggable={false} />
+                <Image
+                  image={imageData.image}
+                  x={imageData.offsetX}
+                  y={imageData.offsetY}
+                  width={imageData.scaledWidth}
+                  height={imageData.scaledHeight}
+                  draggable={false}
+                />
                 {lines.map((line, i) => (
                   <Line
                     key={i}
                     points={line.points}
                     stroke={line.color}
                     strokeWidth={2}
+                    lineCap="round"
+                    tension={0.5}
+                    closed={line.closed}
+                    fill={line.closed ? line.color : "transparent"}
+                    globalCompositeOperation="source-over"
+                  />
+                ))}
+                {lines.map((line, i) => (
+                  <Line
+                    key={i}
+                    points={line.points}
+                    stroke={line.color}
+                    strokeWidth={line.width}
                     lineCap="round"
                     tension={0.5}
                     closed={line.closed}
@@ -159,9 +263,16 @@ function KonvaCanvas() {
                 ))}
               </Layer>
             </Stage>
+            <div className="absolute inset-0 justify-center items-center text-center flex gap-2 z-10 bg-[#ffffffba]">
+              <p className="m-auto text-[red] font-semibold [filter:drop-shadow(2px_6px_6px_white)]">
+                Mobile version not allowed.
+                <br />
+                Please use desktop or tablet version.
+              </p>
+            </div>
             <div className="absolute bottom-[102%] right-3 flex flex-row gap-5">
               <div className="flex flex-row items-center gap-3">
-              <select
+                <select
                   value={exportFormat}
                   onChange={e => setExportFormat(e.target.value as "png" | "jpg" | "jpeg")}
                   className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-500">
@@ -169,32 +280,48 @@ function KonvaCanvas() {
                   <option value="jpg">JPG</option>
                   <option value="jpeg">JPEG</option>
                 </select>
-                <button
-                  className={`button max-w-[60px] max-h-[60px] ${tool === "draw" && "bg-green-600"}`}
-                  onClick={exportCanvas}>
+                <button className="button max-w-[60px] max-h-[60px]" onClick={exportCanvas}>
                   <div className="button__content">
                     <div className="button__icon">
-                      <img src="/icons/export.png" alt="Export" />
+                      <img src="/icons/export.png" alt="Export" title="Export Masked Image" />
                     </div>
                   </div>
                 </button>
-                
               </div>
-              <button
-                className={`button max-w-[60px] max-h-[60px] ${tool === "draw" && "bg-green-600"}`}
-                onClick={resetCanvas}>
+              <button className={`button max-w-[60px] max-h-[60px]`} onClick={resetCanvas}>
                 <div className="button__content">
                   <div className="button__icon">
-                    <img src="/icons/reset.png" alt="Reset" />
+                    <img src="/icons/reset.png" alt="Reset" title="Reset Changes" />
                   </div>
                 </div>
               </button>
+              <button className={`button max-w-[60px] max-h-[60px]`} onClick={rewindCanvas}>
+                <div className="button__content">
+                  <div className="button__icon">
+                    <img src="/icons/back.png" alt="Rewind" title="Rewind Changes" />
+                  </div>
+                </div>
+              </button>
+              <label className={`button max-w-[60px] max-h-[60px]`} htmlFor="file-upload">
+                <div className="button__content">
+                  <div className="button__icon">
+                    <img src="/icons/plus.png" alt="Add Image" title="Add New Image" />
+                  </div>
+                </div>
+                <input
+                  id="file-upload"
+                  type="file"
+                  accept="image/png, image/jpeg, image/jpg"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+              </label>
             </div>
           </div>
 
           <div className="flex gap-4 mt-4">
             <button
-              className={`button ${tool === "lasso" && "bg-green-600 active z-5"}`}
+              className={`button ${tool === "lasso" && "active z-5"}`}
               onClick={() => setTool("lasso")}>
               <div className="button__content">
                 <div className="button__icon">
@@ -204,7 +331,7 @@ function KonvaCanvas() {
               </div>
             </button>
             <button
-              className={`button ${tool === "draw" && "bg-green-600 active z-5"}`}
+              className={`button ${tool === "draw" && "active z-5"}`}
               onClick={() => setTool("draw")}>
               <div className="button__content">
                 <div className="button__icon">
@@ -214,7 +341,7 @@ function KonvaCanvas() {
               </div>
             </button>
             <button
-              className={`button ${tool === "rectangle" && "bg-green-600 active z-5"}`}
+              className={`button ${tool === "rectangle" && "active z-5"}`}
               onClick={() => setTool("rectangle")}>
               <div className="button__content">
                 <div className="button__icon">

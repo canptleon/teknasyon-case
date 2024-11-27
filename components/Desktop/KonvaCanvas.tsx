@@ -144,39 +144,33 @@ function KonvaCanvas() {
       alert("Canvas or image not available for export.");
       return;
     }
-  
+
     const stage = stageRef.current.getStage();
-  
+
     const exportCanvas = document.createElement("canvas");
     exportCanvas.width = imageData.image.naturalWidth;
     exportCanvas.height = imageData.image.naturalHeight;
-  
+
     const context = exportCanvas.getContext("2d");
     if (!context) {
       alert("Failed to get export canvas context.");
       return;
     }
-  
+
     context.fillStyle = "black";
     context.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
-  
+
     const scaleX = imageData.image.naturalWidth / imageData.scaledWidth;
     const scaleY = imageData.image.naturalHeight / imageData.scaledHeight;
-  
+
     const offsetX = -imageData.offsetX * scaleX;
     const offsetY = -imageData.offsetY * scaleY;
-  
-    lines.forEach((line) => {
+
+    lines.forEach(line => {
       context.beginPath();
-      context.moveTo(
-        line.points[0] * scaleX + offsetX,
-        line.points[1] * scaleY + offsetY
-      );
+      context.moveTo(line.points[0] * scaleX + offsetX, line.points[1] * scaleY + offsetY);
       for (let i = 2; i < line.points.length; i += 2) {
-        context.lineTo(
-          line.points[i] * scaleX + offsetX,
-          line.points[i + 1] * scaleY + offsetY
-        );
+        context.lineTo(line.points[i] * scaleX + offsetX, line.points[i + 1] * scaleY + offsetY);
       }
       if (line.closed) {
         context.closePath();
@@ -188,8 +182,8 @@ function KonvaCanvas() {
         context.stroke();
       }
     });
-  
-    rectangles.forEach((rect) => {
+
+    rectangles.forEach(rect => {
       context.fillStyle = "white";
       context.fillRect(
         rect.x * scaleX + offsetX,
@@ -198,16 +192,16 @@ function KonvaCanvas() {
         rect.height * scaleY
       );
     });
-  
+
     const dataURL = exportCanvas.toDataURL(`image/${exportFormat}`);
     const link = document.createElement("a");
     link.href = dataURL;
     link.download = `export-mask.${exportFormat}`;
     link.click();
   };
-  
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
+    <div className="flex flex-col items-center justify-center  min-h-[83vh] relative">
       {loading && <Loader />}
       {imageData.image ? (
         <>
@@ -256,14 +250,12 @@ function KonvaCanvas() {
                 ))}
               </Layer>
             </Stage>
-            <div className="absolute left-[102%] top-0 flex flex-col gap-5">
-              <div className="flex flex-row items-center gap-3">
-                <button
-                  className={`button max-w-[60px] max-h-[60px] ${tool === "draw" && "bg-green-600"}`}
-                  onClick={exportCanvas}>
+            <div className="absolute left-[102%] top-0 flex flex-col gap-5 mdfull:bottom-[102%] mdfull:flex-row mdfull:z-[100] mdfull:left-0 mdfull:right-0 mdfull:mx-auto mdfull:relative mdfull:justify-center">
+              <div className="flex flex-row items-center gap-3 mdfull:min-h-[59px]">
+                <button className="button max-w-[60px] max-h-[60px]" onClick={exportCanvas}>
                   <div className="button__content">
                     <div className="button__icon">
-                      <img src="/icons/export.png" alt="Export" title="Export Masked Image"/>
+                      <img src="/icons/export.png" alt="Export" title="Export Masked Image" />
                     </div>
                   </div>
                 </button>
@@ -279,21 +271,21 @@ function KonvaCanvas() {
               <button className={`button max-w-[60px] max-h-[60px]`} onClick={resetCanvas}>
                 <div className="button__content">
                   <div className="button__icon">
-                    <img src="/icons/reset.png" alt="Reset" title="Reset Changes"/>
+                    <img src="/icons/reset.png" alt="Reset" title="Reset Changes" />
                   </div>
                 </div>
               </button>
               <button className={`button max-w-[60px] max-h-[60px]`} onClick={rewindCanvas}>
                 <div className="button__content">
                   <div className="button__icon">
-                    <img src="/icons/back.png" alt="Rewind" title="Rewind Changes"/>
+                    <img src="/icons/back.png" alt="Rewind" title="Rewind Changes" />
                   </div>
                 </div>
               </button>
               <label className={`button max-w-[60px] max-h-[60px]`} htmlFor="file-upload">
                 <div className="button__content">
                   <div className="button__icon">
-                    <img src="/icons/plus.png" alt="Add Image" title="Add New Image"/>
+                    <img src="/icons/plus.png" alt="Add Image" title="Add New Image" />
                   </div>
                 </div>
                 <input
@@ -309,7 +301,7 @@ function KonvaCanvas() {
 
           <div className="flex gap-4 mt-4">
             <button
-              className={`button ${tool === "lasso" && "bg-green-600 active z-5"}`}
+              className={`button ${tool === "lasso" && "active z-5"}`}
               onClick={() => setTool("lasso")}>
               <div className="button__content">
                 <div className="button__icon">
@@ -320,7 +312,7 @@ function KonvaCanvas() {
             </button>
             <div className="flex flex-col items-center">
               <button
-                className={`button ${tool === "draw" && "bg-green-600 active z-5"}`}
+                className={`button ${tool === "draw" && "active z-5"}`}
                 onClick={() => setTool("draw")}>
                 <div className="button__content">
                   <div className="button__icon">
@@ -346,7 +338,7 @@ function KonvaCanvas() {
               </div>
             </div>
             <button
-              className={`button ${tool === "rectangle" && "bg-green-600 active z-5"}`}
+              className={`button ${tool === "rectangle" && "active z-5"}`}
               onClick={() => setTool("rectangle")}>
               <div className="button__content">
                 <div className="button__icon">
@@ -359,7 +351,9 @@ function KonvaCanvas() {
         </>
       ) : (
         <div className="absolute inset-0 flex items-center justify-center z-10">
-          <label className="button !w-[170px] !h-[142px]" htmlFor="file-upload">
+          <label
+            className="button !w-[170px] !h-[142px] !min-w-[170px] !min-h-[142px]"
+            htmlFor="file-upload">
             <div className="button__content">
               <div className="button__icon">
                 <img src="/icons/plus.png" alt="Add Image" />
