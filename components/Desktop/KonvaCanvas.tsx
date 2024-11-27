@@ -11,8 +11,21 @@ function KonvaCanvas() {
   const [isDrawing, setIsDrawing] = useState(false);
   const [exportFormat, setExportFormat] = useState<"png" | "jpg" | "jpeg">("png");
   const [loading, setLoading] = useState(false);
+  const [history, setHistory] = useState<any[]>([]);
+  const [brushWidth, setBrushWidth] = useState<number>(5);
+
+  const saveToHistory = () => {
+    setHistory(prevHistory => [
+      ...prevHistory,
+      {
+        lines: [...lines],
+        rectangles: [...rectangles],
+      },
+    ]);
+  };
 
   const handleMouseDown = () => {
+    saveToHistory();
     const stage = stageRef.current.getStage();
     const pointer = stage.getPointerPosition();
 
@@ -21,7 +34,10 @@ function KonvaCanvas() {
     } else if (tool === "rectangle") {
       setRectangles([...rectangles, { x: pointer.x, y: pointer.y, width: 0, height: 0 }]);
     } else if (tool === "draw") {
-      setLines([...lines, { points: [pointer.x, pointer.y], closed: false, color: "blue" }]);
+      setLines([
+        ...lines,
+        { points: [pointer.x, pointer.y], closed: false, color: "blue", width: brushWidth },
+      ]);
     }
 
     setIsDrawing(true);
@@ -67,9 +83,19 @@ function KonvaCanvas() {
   };
 
   const resetCanvas = () => {
+    saveToHistory();
     setLines([]);
     setRectangles([]);
     setTool("select");
+  };
+
+  const rewindCanvas = () => {
+    if (history.length > 0) {
+      const lastState = history[history.length - 1];
+      setLines(lastState.lines);
+      setRectangles(lastState.rectangles);
+      setHistory(history.slice(0, -1));
+    }
   };
 
   const exportCanvas = () => {
@@ -137,7 +163,7 @@ function KonvaCanvas() {
                     key={i}
                     points={line.points}
                     stroke={line.color}
-                    strokeWidth={2}
+                    strokeWidth={line.width}
                     lineCap="round"
                     tension={0.5}
                     closed={line.closed}
@@ -179,12 +205,17 @@ function KonvaCanvas() {
                   <option value="jpeg">JPEG</option>
                 </select>
               </div>
-              <button
-                className={`button max-w-[60px] max-h-[60px] ${tool === "draw" && "bg-green-600"}`}
-                onClick={resetCanvas}>
+              <button className={`button max-w-[60px] max-h-[60px]`} onClick={resetCanvas}>
                 <div className="button__content">
                   <div className="button__icon">
                     <img src="/icons/reset.png" alt="Reset" />
+                  </div>
+                </div>
+              </button>
+              <button className={`button max-w-[60px] max-h-[60px]`} onClick={rewindCanvas}>
+                <div className="button__content">
+                  <div className="button__icon">
+                    <img src="/icons/back.png" alt="Rewind" />
                   </div>
                 </div>
               </button>
@@ -202,16 +233,33 @@ function KonvaCanvas() {
                 <p className="button__text">Lasso</p>
               </div>
             </button>
-            <button
-              className={`button ${tool === "draw" && "bg-green-600 active z-5"}`}
-              onClick={() => setTool("draw")}>
-              <div className="button__content">
-                <div className="button__icon">
-                  <img src="/icons/brush.png" alt="Brush" />
+            <div className="flex flex-col items-center">
+              <button
+                className={`button ${tool === "draw" && "bg-green-600 active z-5"}`}
+                onClick={() => setTool("draw")}>
+                <div className="button__content">
+                  <div className="button__icon">
+                    <img src="/icons/brush.png" alt="Brush" />
+                  </div>
+                  <p className="button__text">Brush</p>
                 </div>
-                <p className="button__text">Brush</p>
+              </button>
+              <div className="flex flex-col items-center mt-4 gap-2">
+                <label htmlFor="brush-width" className="text-gray-700">
+                  Adjust Brush Width
+                </label>
+                <input
+                  id="brush-width"
+                  type="range"
+                  min="1"
+                  max="50"
+                  value={brushWidth}
+                  onChange={e => setBrushWidth(Number(e.target.value))}
+                  className="w-full"
+                />
+                <p className="text-sm text-gray-500">Width: {brushWidth}px</p>
               </div>
-            </button>
+            </div>
             <button
               className={`button ${tool === "rectangle" && "bg-green-600 active z-5"}`}
               onClick={() => setTool("rectangle")}>
