@@ -17,15 +17,12 @@ Check out the live demo of the project here:
   - **Lasso:** Create freeform closed shapes to mask parts of the image.
   - **Rectangle:** Draw rectangular areas on the canvas.
 - **Reset:** Clear all drawings and restore the original image.
+- **Rewind:** The most recent change is removed from the history stack.
 - **Export Options:** Save the canvas as:
   - **PNG**: High-quality transparent image.
   - **JPG**: Compressed image format.
   - **JPEG**: Alternative compressed format.
 - **Adjust Pencil Size:** Change the width of the Brush and Lasso tools for precise editing.
-
-## **Getting Started**
-
-Follow these instructions to get a copy of the project running on your local machine.
 
 ### **Prerequisites**
 
