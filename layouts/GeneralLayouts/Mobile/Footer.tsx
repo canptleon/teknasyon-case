@@ -2,19 +2,15 @@ import React from "react";
 import Link from "next/link";
 
 function MobileFooter() {
-
   return (
-    <footer className="w-full my-[20px]">
-      <div className="max-w-[1440px] mx-auto w-full px-[16px] md:px-[80px] flex flex-col items-center">
-        <div className="flex justify-center space-x-8 mb-6">
-          
-        </div>
-        <div className="text-center text-sm text-[black] pl-[20px] pr-[20px] font-semibold bg-[#ffffff] p-[5px] rounded-[50px]">
-          &copy; 2024 
+    <footer className="w-full mt-[20px] pb-2">
+      <div className="mx-auto flex flex-col items-center">
+        <div className="text-center text-sm text-[black] font-semibold p-[5px]">
+          &copy; 2024 {" "}
           <Link href="https://www.ardakeyisoglu.com/" target="_blank">
             Arda Keyişoğlu.
           </Link>
-           All Rights Reserved.
+          All Rights Reserved.
         </div>
       </div>
     </footer>
