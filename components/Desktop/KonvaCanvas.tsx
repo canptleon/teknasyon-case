@@ -1,24 +1,20 @@
-import React, { useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { Stage, Layer, Line, Rect, Image } from "react-konva";
+import { LineType, RectangleType, ImageDataType } from "../../data/types/canvas";
 import Loader from "../Loading";
 
 function KonvaCanvas() {
+
   const stageRef = useRef<any>(null);
   const [tool, setTool] = useState<string>("select");
-  const [lines, setLines] = useState<any[]>([]);
-  const [rectangles, setRectangles] = useState<any[]>([]);
+  const [lines, setLines] = useState<LineType[]>([]);
+  const [rectangles, setRectangles] = useState<RectangleType[]>([]);
   const [isDrawing, setIsDrawing] = useState(false);
   const [exportFormat, setExportFormat] = useState<"png" | "jpg" | "jpeg">("png");
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<any[]>([]);
   const [brushWidth, setBrushWidth] = useState<number>(5);
-  const [imageData, setImageData] = useState<{
-    image: HTMLImageElement | null;
-    scaledWidth: number;
-    scaledHeight: number;
-    offsetX: number;
-    offsetY: number;
-  }>({
+  const [imageData, setImageData] = useState<ImageDataType>({
     image: null,
     scaledWidth: 800,
     scaledHeight: 600,
@@ -26,7 +22,7 @@ function KonvaCanvas() {
     offsetY: 0,
   });
 
-  const saveToHistory = () => {
+  const saveToHistory = useCallback(() => {
     setHistory(prevHistory => [
       ...prevHistory,
       {
@@ -34,13 +30,13 @@ function KonvaCanvas() {
         rectangles: [...rectangles],
       },
     ]);
-  };
+  }, [lines, rectangles]);
 
-  const handleMouseDown = () => {
+  const handleMouseDown = useCallback(() => {
     saveToHistory();
     const stage = stageRef.current.getStage();
     const pointer = stage.getPointerPosition();
-
+  
     if (tool === "lasso") {
       setLines([...lines, { points: [pointer.x, pointer.y], closed: false, color: "green" }]);
     } else if (tool === "rectangle") {
@@ -51,9 +47,9 @@ function KonvaCanvas() {
         { points: [pointer.x, pointer.y], closed: false, color: "blue", width: brushWidth },
       ]);
     }
-
+  
     setIsDrawing(true);
-  };
+  }, [lines, rectangles, tool, brushWidth, saveToHistory]);
 
   const handleMouseMove = () => {
     if (!isDrawing) return;
@@ -145,8 +141,6 @@ function KonvaCanvas() {
       return;
     }
 
-    const stage = stageRef.current.getStage();
-
     const exportCanvas = document.createElement("canvas");
     exportCanvas.width = imageData.image.naturalWidth;
     exportCanvas.height = imageData.image.naturalHeight;
@@ -178,7 +172,7 @@ function KonvaCanvas() {
         context.fill();
       } else {
         context.strokeStyle = "white";
-        context.lineWidth = line.width * Math.max(scaleX, scaleY);
+        context.lineWidth = (line.width || 1) * Math.max(scaleX, scaleY);
         context.stroke();
       }
     });
