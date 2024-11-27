@@ -80,6 +80,7 @@ function KonvaCanvas() {
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     setLoading(true);
+    setHistory([]);
 
     const file = e.target.files?.[0];
     if (file) {
