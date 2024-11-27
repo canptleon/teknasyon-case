@@ -270,8 +270,8 @@ function KonvaCanvas() {
                 Please use desktop or tablet version.
               </p>
             </div>
-            <div className="absolute bottom-[102%] right-3 flex flex-row gap-5">
-              <div className="flex flex-row items-center gap-3">
+            <div className="absolute bottom-[102%] right-3 flex flex-row gap-2">
+              <div className="flex flex-row items-center gap-2">
                 <select
                   value={exportFormat}
                   onChange={e => setExportFormat(e.target.value as "png" | "jpg" | "jpeg")}
