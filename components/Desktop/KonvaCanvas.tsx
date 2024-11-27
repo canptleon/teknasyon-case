@@ -60,27 +60,42 @@ function KonvaCanvas() {
   }, [lines, rectangles, tool, brushWidth, saveToHistory]);
 
   const handleMouseMove = () => {
-    if (!isDrawing || tool !== "lasso") return;
+    if (!isDrawing) return;
   
     const stage = stageRef.current.getStage();
     const pointer = stage.getPointerPosition();
   
-    const lastLine = lines[lines.length - 1];
-    
-    const updatedPoints = lastLine.points.concat([pointer.x, pointer.y]);
+    if (tool === "lasso") {
+      const lastLine = lines[lines.length - 1];
   
-    const closedPoints = [...updatedPoints, lastLine.points[0], lastLine.points[1]];
+      const updatedPoints = lastLine.points.concat([pointer.x, pointer.y]);
   
-    setLines([
-      ...lines.slice(0, -1),
-      {
-        ...lastLine,
-        points: updatedPoints,
-        fill: "rgba(0, 255, 0, 0.2)",
-        closed: true,
-      },
-    ]);
-  };
+      const closedPoints = [...updatedPoints, lastLine.points[0], lastLine.points[1]];
+  
+      setLines([
+        ...lines.slice(0, -1),
+        {
+          ...lastLine,
+          points: updatedPoints,
+          fill: "rgba(0, 255, 0, 0.2)",
+          closed: true,
+        },
+      ]);
+    } else if (tool === "draw") {
+      const lastLine = lines[lines.length - 1];
+  
+      lastLine.points = lastLine.points.concat([pointer.x, pointer.y]);
+  
+      setLines([...lines.slice(0, -1), lastLine]);
+    } else if (tool === "rectangle") {
+      const lastRect = rectangles[rectangles.length - 1];
+  
+      lastRect.width = pointer.x - lastRect.x;
+      lastRect.height = pointer.y - lastRect.y;
+  
+      setRectangles([...rectangles.slice(0, -1), lastRect]);
+    }
+  };  
   
   const handleMouseUp = () => {
     if (tool === "lasso") {
