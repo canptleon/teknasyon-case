@@ -252,7 +252,7 @@ function KonvaCanvas() {
                     key={i}
                     points={line.points}
                     stroke={line.color}
-                    strokeWidth={2}
+                    strokeWidth={line.width}
                     lineCap="round"
                     tension={0.5}
                     closed={line.closed}
